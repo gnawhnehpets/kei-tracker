@@ -1,0 +1,9 @@
+services:
+  kei-tracker:
+    build: .
+    restart: unless-stopped
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_COLLECTION=${DATABASE_COLLECTION}
+      - AISSTREAM_API_KEY=${AISSTREAM_API_KEY}
