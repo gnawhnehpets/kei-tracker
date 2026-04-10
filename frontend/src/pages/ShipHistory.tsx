@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import maplibregl from 'maplibre-gl'
 import Map from '../components/Map'
@@ -19,10 +19,13 @@ export default function ShipHistory() {
   const mapRef = useRef<maplibregl.Map | null>(null)
   const sourceAdded = useRef(false)
 
-  const since =
-    rangeHours > 0
-      ? new Date(Date.now() - rangeHours * 3_600_000).toISOString()
-      : undefined
+  const since = useMemo(
+    () =>
+      rangeHours > 0
+        ? new Date(Date.now() - rangeHours * 3_600_000).toISOString()
+        : undefined,
+    [rangeHours],
+  )
 
   const { data: records = [], isLoading } = useShipHistory(Number(mmsi), since)
 

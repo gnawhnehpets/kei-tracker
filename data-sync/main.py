@@ -39,7 +39,7 @@ async def connect_ais_stream(sample=False):
     if sample:
         mmsi_filter = await collect_sample_mmsis()
     else:
-        mmsi_filter = ["257711000", "230028670"]
+        mmsi_filter = ["257711000", "230028670", "352003002"]
 
     while True:
         try:
