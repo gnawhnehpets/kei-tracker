@@ -28,7 +28,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/kei-tracker:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/kei-tracker:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/keitracker:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/keitracker:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
