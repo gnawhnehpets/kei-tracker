@@ -33,7 +33,7 @@ async def collect_sample_mmsis():
     print(f"Sampled MMSIs: {list(mmsis)}")
     return list(mmsis)
 
-RECEIVE_TIMEOUT = 30  # seconds before assuming a dead connection
+RECEIVE_TIMEOUT = 60  # seconds before assuming a dead connection
 
 async def connect_ais_stream(sample=False):
     if sample:
