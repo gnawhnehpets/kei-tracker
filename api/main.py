@@ -28,6 +28,7 @@ async def get_ship_history(
     mmsi: int,
     limit: int = Query(default=100, ge=1, le=1000),
     message_type: Optional[str] = Query(default=None, description="PositionReport or ShipStaticData"),
+    since: Optional[str] = Query(default=None, description="ISO 8601 timestamp — return records after this time"),
 ):
     """Return historical records for a ship by MMSI, newest first."""
     query: dict = {"MetaData.MMSI": mmsi}
@@ -35,6 +36,12 @@ async def get_ship_history(
         if message_type not in ("PositionReport", "ShipStaticData"):
             raise HTTPException(status_code=400, detail="message_type must be PositionReport or ShipStaticData")
         query["MessageType"] = message_type
+    if since:
+        try:
+            since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="since must be a valid ISO 8601 timestamp")
+        query["timestamp"] = {"$gte": since_dt}
 
     cursor = collection.find(query).sort("timestamp", -1).limit(limit)
     docs = [serialize_doc(doc) async for doc in cursor]

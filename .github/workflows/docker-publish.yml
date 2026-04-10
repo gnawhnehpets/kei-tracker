@@ -43,3 +43,14 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/keitracker-api:${{ github.sha }}
           cache-from: type=gha,scope=api
           cache-to: type=gha,scope=api,mode=max
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/keitracker-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/keitracker-frontend:${{ github.sha }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max

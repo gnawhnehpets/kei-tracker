@@ -26,6 +26,18 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
+  frontend:
+    build:
+      context: ./frontend
+    image: ${DOCKERHUB_USERNAME}/keitracker-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
   watchtower:
     image: containrrr/watchtower
     restart: unless-stopped
