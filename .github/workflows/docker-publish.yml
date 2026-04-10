@@ -22,13 +22,24 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
+      - name: Build and push data-sync
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./data-sync
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/keitracker:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/keitracker:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=data-sync
+          cache-to: type=gha,scope=data-sync,mode=max
+
+      - name: Build and push api
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/keitracker-api:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/keitracker-api:${{ github.sha }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max

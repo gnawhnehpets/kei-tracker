@@ -1,5 +1,7 @@
 services:
-  kei-tracker:
+  data-sync:
+    build:
+      context: ./data-sync
     image: ${DOCKERHUB_USERNAME}/keitracker:latest
     restart: unless-stopped
     environment:
@@ -7,6 +9,20 @@ services:
       - DATABASE_NAME=${DATABASE_NAME}
       - DATABASE_COLLECTION=${DATABASE_COLLECTION}
       - AISSTREAM_API_KEY=${AISSTREAM_API_KEY}
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  api:
+    build:
+      context: ./api
+    image: ${DOCKERHUB_USERNAME}/keitracker-api:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_COLLECTION=${DATABASE_COLLECTION}
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
