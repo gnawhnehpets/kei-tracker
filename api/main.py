@@ -68,6 +68,7 @@ async def get_ship_latest(mmsi: int):
 async def list_ships():
     """Return a list of unique ships seen, with their latest metadata."""
     pipeline = [
+        {"$match": {"MessageType": "PositionReport"}},
         {"$sort": {"timestamp": -1}},
         {"$group": {
             "_id": "$MetaData.MMSI",
@@ -75,6 +76,8 @@ async def list_ships():
             "last_seen": {"$first": "$timestamp"},
             "last_latitude": {"$first": "$MetaData.latitude"},
             "last_longitude": {"$first": "$MetaData.longitude"},
+            "true_heading": {"$first": "$TrueHeading"},
+            "cog": {"$first": "$Cog"},
         }},
         {"$project": {
             "_id": 0,
@@ -83,6 +86,8 @@ async def list_ships():
             "last_seen": 1,
             "last_latitude": 1,
             "last_longitude": 1,
+            "true_heading": 1,
+            "cog": 1,
         }},
         {"$sort": {"last_seen": -1}},
     ]

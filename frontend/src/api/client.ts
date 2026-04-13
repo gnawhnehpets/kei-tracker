@@ -6,6 +6,8 @@ export interface Ship {
   last_seen: string
   last_latitude: number
   last_longitude: number
+  true_heading?: number
+  cog?: number
 }
 
 export interface PositionRecord {

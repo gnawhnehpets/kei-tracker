@@ -45,6 +45,7 @@ export default function LiveMap() {
               key={ship.mmsi}
               map={map}
               ship={ship}
+              heading={ship.true_heading != null && ship.true_heading !== 511 ? ship.true_heading : (ship.cog ?? 0)}
               onClick={handleSelect}
             />
           ))}

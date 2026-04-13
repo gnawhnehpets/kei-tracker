@@ -27,12 +27,18 @@ export default function Map({ onMapReady, center = [15, 60], zoom = 4, className
     map.addControl(new maplibregl.ScaleControl(), 'bottom-left')
 
     map.on('load', () => {
+      map.resize()
       onMapReady?.(map)
     })
+
+    // Keep map sized correctly if the container changes (e.g. sidebar toggle)
+    const observer = new ResizeObserver(() => map.resize())
+    observer.observe(containerRef.current)
 
     mapRef.current = map
 
     return () => {
+      observer.disconnect()
       map.remove()
       mapRef.current = null
     }

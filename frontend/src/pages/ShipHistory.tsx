@@ -18,6 +18,8 @@ export default function ShipHistory() {
   const [rangeHours, setRangeHours] = useState(6)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const sourceAdded = useRef(false)
+  const shipMarkerRef = useRef<maplibregl.Marker | null>(null)
+  const [mapReady, setMapReady] = useState(false)
 
   const since = useMemo(
     () =>
@@ -31,14 +33,24 @@ export default function ShipHistory() {
 
   const shipName = records[0]?.MetaData?.ShipName?.trim() || `MMSI ${mmsi}`
 
-  // Draw track on map whenever records change
+  // Derive initial map center from the latest record so we don't start at a default location
+  const initialCenter = useMemo((): [number, number] => {
+    if (records.length === 0) return [135, 35] // fallback: Japan
+    const latest = [...records].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    )[0]
+    return [latest.Longitude, latest.Latitude]
+  }, [records.length > 0])
+
+  // Draw track on map whenever records or map readiness changes
   useEffect(() => {
     const map = mapRef.current
-    if (!map || records.length === 0) return
+    if (!map || !mapReady || records.length === 0) return
 
-    const coords: [number, number][] = [...records]
-      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-      .map((r) => [r.Longitude, r.Latitude])
+    const sortedRecords = [...records].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    )
+    const coords: [number, number][] = sortedRecords.map((r) => [r.Longitude, r.Latitude])
 
     const geojson: GeoJSON.FeatureCollection = {
       type: 'FeatureCollection',
@@ -86,19 +98,50 @@ export default function ShipHistory() {
       sourceAdded.current = true
     }
 
-    // Fit map to track
+    // Fit map to track instantly (no animation — map initializes at correct center already)
     if (coords.length > 1) {
       const bounds = coords.reduce(
         (b, c) => b.extend(c as [number, number]),
         new maplibregl.LngLatBounds(coords[0], coords[0]),
       )
-      map.fitBounds(bounds, { padding: 60, maxZoom: 12 })
+      map.fitBounds(bounds, { padding: 60, maxZoom: 12, animate: false })
     }
-  }, [records])
+
+    // Place / update ship icon at the latest coordinate
+    const latest = coords[coords.length - 1]
+    const latestRecord = sortedRecords[sortedRecords.length - 1]
+    const heading = latestRecord?.TrueHeading != null && latestRecord.TrueHeading !== 511
+      ? latestRecord.TrueHeading
+      : (latestRecord?.Cog ?? 0)
+
+    if (shipMarkerRef.current) {
+      shipMarkerRef.current.setLngLat(latest)
+      const svg = shipMarkerRef.current.getElement().querySelector('svg')
+      if (svg) svg.style.transform = `rotate(${heading}deg)`
+    } else {
+      const el = document.createElement('div')
+      el.title = shipName
+      el.style.cssText = `width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;`
+      el.innerHTML = `<svg width="14" height="20" viewBox="0 0 14 20" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(${heading}deg); transform-origin: 50% 50%; transition: transform 0.5s ease;">
+        <polygon points="7,0 0,20 14,20" fill="#f59e0b" stroke="#92400e" stroke-width="1.5"/>
+      </svg>`
+      shipMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat(latest)
+        .addTo(map)
+    }
+  }, [records, mapReady])
 
   function handleMapReady(map: maplibregl.Map) {
     mapRef.current = map
+    setMapReady(true)
   }
+
+  // Clean up marker on unmount
+  useEffect(() => {
+    return () => {
+      shipMarkerRef.current?.remove()
+    }
+  }, [])
 
   return (
     <div className="h-screen flex flex-col bg-gray-950 text-white">
@@ -133,7 +176,7 @@ export default function ShipHistory() {
         </div>
       </div>
 
-      {/* Map */}
+      {/* Map — only render once data is available so initial center is correct */}
       <div className="flex-1 min-h-0">
         {isLoading && (
           <div className="flex items-center justify-center h-full">
@@ -141,7 +184,7 @@ export default function ShipHistory() {
           </div>
         )}
         {!isLoading && (
-          <Map onMapReady={handleMapReady} center={[15, 60]} zoom={5} className="h-full" />
+          <Map onMapReady={handleMapReady} center={initialCenter} zoom={7} className="h-full" />
         )}
       </div>
 

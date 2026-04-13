@@ -14,22 +14,14 @@ export default function ShipMarker({ map, ship, heading = 0, onClick }: ShipMark
 
   useEffect(() => {
     const el = document.createElement('div')
-    el.className = 'ship-marker'
     el.title = ship.ship_name.trim()
-    el.style.cssText = `
-      width: 0;
-      height: 0;
-      border-left: 6px solid transparent;
-      border-right: 6px solid transparent;
-      border-bottom: 18px solid #3b82f6;
-      transform: rotate(${heading}deg);
-      cursor: pointer;
-      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
-      transition: transform 0.5s ease;
-    `
+    el.style.cssText = `width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;`
+    el.innerHTML = `<svg width="12" height="18" viewBox="0 0 12 18" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(${heading}deg); transform-origin: 50% 50%; transition: transform 0.5s ease;">
+      <polygon points="6,0 0,18 12,18" fill="#3b82f6" stroke="#1d4ed8" stroke-width="1.5"/>
+    </svg>`
     el.addEventListener('click', () => onClick(ship))
 
-    const marker = new maplibregl.Marker({ element: el })
+    const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
       .setLngLat([ship.last_longitude, ship.last_latitude])
       .addTo(map)
 
@@ -44,8 +36,8 @@ export default function ShipMarker({ map, ship, heading = 0, onClick }: ShipMark
   useEffect(() => {
     if (!markerRef.current) return
     markerRef.current.setLngLat([ship.last_longitude, ship.last_latitude])
-    const el = markerRef.current.getElement()
-    el.style.transform = `rotate(${heading}deg)`
+    const svg = markerRef.current.getElement().querySelector('svg')
+    if (svg) svg.style.transform = `rotate(${heading}deg)`
   }, [ship.last_latitude, ship.last_longitude, heading])
 
   return null
