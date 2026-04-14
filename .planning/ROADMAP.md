@@ -19,7 +19,10 @@
   3. Real-time and historical ship data is successfully stored in MongoDB.
   4. The database schema accommodates various AIS message types and their attributes.
   5. The database is secured against unauthorized access.
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 01-01-PLAN.md — MongoDB Setup and AIS Schema
+- [ ] 01-02-PLAN.md — AIS Data Ingestion and Parsing Logic
+- [ ] 01-03-PLAN.md — Data Persistence, Main Integration, and Security
 
 ### Phase 2: Real-time Backend & Data Broadcast
 **Goal**: Implement the backend services for real-time data processing and broadcasting to the frontend.
