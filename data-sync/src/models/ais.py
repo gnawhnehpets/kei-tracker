@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, Any
 
 
@@ -22,9 +22,10 @@ class AISBaseMessage(BaseModel):
     # meta_data: MetaData
 
     # Pydantic configuration to allow extra fields and map aliases
-    class Config:
-        allow_population_by_field_name = True
-        extra = "allow"  # Allow extra fields for now, as message types vary
+    model_config = ConfigDict(
+        populate_by_name=True,
+        extra="allow",  # Allow extra fields for now, as message types vary
+    )
 
 
 class AISMessage3(AISBaseMessage):
