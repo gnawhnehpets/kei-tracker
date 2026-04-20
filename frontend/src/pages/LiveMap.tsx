@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import maplibregl from 'maplibre-gl'
 import Map from '../components/Map'
 import ShipMarker from '../components/ShipMarker'
@@ -11,6 +11,21 @@ export default function LiveMap() {
   const { data: ships = [], isLoading } = useShips()
   const [map, setMap] = useState<maplibregl.Map | null>(null)
   const [selected, setSelected] = useState<Ship | null>(null)
+
+  // Auto-select ship 257711000 on initial load
+  useEffect(() => {
+    if (ships.length > 0 && !selected) {
+      const targetShip = ships.find(s => s.mmsi === 257711000) || ships[0]
+      setSelected(targetShip)
+    }
+  }, [ships, selected])
+
+  // Fly map to selected ship
+  useEffect(() => {
+    if (selected && map) {
+      map.flyTo({ center: [selected.last_longitude, selected.last_latitude], zoom: 8 })
+    }
+  }, [selected, map])
 
   const handleSelect = useCallback(
     (ship: Ship) => {

@@ -16,8 +16,11 @@ export default function ShipMarker({ map, ship, heading = 0, onClick }: ShipMark
     const el = document.createElement('div')
     el.title = ship.ship_name.trim()
     el.style.cssText = `width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;`
+    const isTarget = ship.mmsi === 257711000
+    const fillColor = isTarget ? '#22c55e' : '#3b82f6'
+    const strokeColor = isTarget ? '#16a34a' : '#1d4ed8'
     el.innerHTML = `<svg width="12" height="18" viewBox="0 0 12 18" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(${heading}deg); transform-origin: 50% 50%; transition: transform 0.5s ease;">
-      <polygon points="6,0 0,18 12,18" fill="#3b82f6" stroke="#1d4ed8" stroke-width="1.5"/>
+      <polygon points="6,0 0,18 12,18" fill="${fillColor}" stroke="${strokeColor}" stroke-width="1.5"/>
     </svg>`
     el.addEventListener('click', () => onClick(ship))
 
