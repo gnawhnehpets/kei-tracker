@@ -17,7 +17,8 @@ SAMPLE_COUNT = 10
 
 REGION_BOUNDING_BOXES = [
     [[24.0, 122.0], [46.0, 146.0]],   # Japan + surrounding waters
-    [[-5.0, 95.0], [25.0, 122.0]],    # Southeast Asia / Strait of Malacca / South China Sea
+    # [[-5.0, 95.0], [25.0, 122.0]], # Southeast Asia / Strait of Malacca / South China Sea
+    [[-90, -180, 90, 180]]
 ]
 
 async def collect_sample_mmsis():

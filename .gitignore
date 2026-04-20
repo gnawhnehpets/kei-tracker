@@ -3,3 +3,4 @@
 node_modules
 .venv/
 PLAN.md
+__pycache__/

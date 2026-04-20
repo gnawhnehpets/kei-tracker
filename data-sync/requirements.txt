@@ -1,3 +1,6 @@
 websockets==15.0.1
-python-dotenv==1.0.1
+python-dotenv==1.2.2
 motor==3.7.0
+pytest
+pydantic
+pymongo
