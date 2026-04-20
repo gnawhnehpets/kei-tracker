@@ -14,10 +14,8 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
 
   data-sync-aisstream:
-    build:
-      context: ./data-sync
-      dockerfile: Dockerfile.aisstream
-    # image: gnawhnehpets/keitracker-2:latest
+    image: ${DOCKERHUB_USERNAME}/keitracker-2:latest
+    pull_policy: always
     restart: unless-stopped
     command: python -u main_aisstream.py
     environment:
