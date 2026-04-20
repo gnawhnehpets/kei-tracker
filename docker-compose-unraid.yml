@@ -1,6 +1,7 @@
 services:
   data-sync:
-    # image: ${DOCKERHUB_USERNAME}/keitracker:latest
+    image: ${DOCKERHUB_USERNAME}/keitracker:latest
+    pull_policy: always
     restart: unless-stopped
     environment:
       - MONGODB_URI=${MONGODB_URI}
@@ -13,7 +14,7 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
 
   api:
-    # image: ${DOCKERHUB_USERNAME}/keitracker-api:latest
+    image: ${DOCKERHUB_USERNAME}/keitracker-api:latest
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -25,7 +26,7 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
 
   frontend:
-    # image: ${DOCKERHUB_USERNAME}/keitracker-frontend:latest
+    image: ${DOCKERHUB_USERNAME}/keitracker-frontend:latest
     restart: unless-stopped
     ports:
       - "3000:80"
