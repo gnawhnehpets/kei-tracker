@@ -15,10 +15,9 @@ collection = db[os.environ["DATABASE_COLLECTION"]]
 
 SAMPLE_COUNT = 10
 
+# Global bounding box to avoid constraining data pulls
 REGION_BOUNDING_BOXES = [
-    [[24.0, 122.0], [46.0, 146.0]],   # Japan + surrounding waters
-    # [[-5.0, 95.0], [25.0, 122.0]], # Southeast Asia / Strait of Malacca / South China Sea
-    [[-90, -180, 90, 180]]
+    [[-90, -180], [90, 180]]  # Global coverage
 ]
 
 async def collect_sample_mmsis():
@@ -91,6 +90,7 @@ async def connect_ais_stream(sample=False, mmsi: str | None = None):
                         ais_message['MetaData'] = metadata
                         ais_message['ship_id'] = metadata['MMSI']
                         ais_message['timestamp'] = timestamp
+                        ais_message['source'] = 'aisstream'
                         try:
                             await collection.insert_one(ais_message)
                         except Exception as db_err:
