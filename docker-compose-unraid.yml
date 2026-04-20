@@ -13,6 +13,19 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
+  data-sync-aisstream:
+    image: ${DOCKERHUB_USERNAME}/keitracker-2:latest
+    pull_policy: always
+    restart: unless-stopped
+    command: python -u main_aisstream.py
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_COLLECTION=${DATABASE_COLLECTION}
+      - AISSTREAM_API_KEY=${AISSTREAM_API_KEY}
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
   api:
     image: ${DOCKERHUB_USERNAME}/keitracker-api:latest
     restart: unless-stopped
