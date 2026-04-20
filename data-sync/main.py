@@ -41,12 +41,14 @@ async def collect_sample_mmsis():
 
 RECEIVE_TIMEOUT = 60  # seconds before assuming a dead connection
 
-async def connect_ais_stream(sample=False):
+async def connect_ais_stream(sample=False, mmsi: str | None = None):
     # Known tracked ships + Japan / Southeast Asia region vessels
     hardcoded = ["257711000", "230028670", "352003002", "566524000", "431402072", "305127000", "431009418", "431005074",
                  "431602000", "477307800", "563036700", "525019017", "525100518"]
 
-    if sample:
+    if mmsi:
+        mmsi_filter = [mmsi]
+    elif sample:
         mmsi_filter = await collect_sample_mmsis()
     else:
         sampled = await collect_sample_mmsis()
@@ -103,5 +105,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--sample", action="store_true",
                         help=f"Filter to {SAMPLE_COUNT} random MMSIs collected from an initial ping")
+    parser.add_argument("--mmsi", type=str, default=None,
+                        help="Track a single MMSI only (skips sampling and hardcoded list)")
     args = parser.parse_args()
-    asyncio.run(connect_ais_stream(sample=args.sample))
+    asyncio.run(connect_ais_stream(sample=args.sample, mmsi=args.mmsi))
