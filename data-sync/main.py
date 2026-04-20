@@ -1,8 +1,6 @@
 import asyncio
 import os
-import argparse
-import websockets
-import json
+import httpx
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 import motor.motor_asyncio
@@ -13,99 +11,102 @@ client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGODB_URI"])
 db = client[os.environ["DATABASE_NAME"]]
 collection = db[os.environ["DATABASE_COLLECTION"]]
 
-SAMPLE_COUNT = 10
+BASE_URL = "https://api.marinesia.com/api/v2/vessel/location/latest"
+POLL_INTERVAL = 1800  # seconds between full poll cycles
+REQUEST_DELAY = 2     # seconds between individual MMSI requests
 
-REGION_BOUNDING_BOXES = [
-    [[24.0, 122.0], [46.0, 146.0]],   # Japan + surrounding waters
-    # [[-5.0, 95.0], [25.0, 122.0]], # Southeast Asia / Strait of Malacca / South China Sea
-    [[-90, -180, 90, 180]]
-]
+MMSI_LIST = ["257711000"]
 
-async def collect_sample_mmsis():
-    """Collect SAMPLE_COUNT unique MMSIs from Japan / Southeast Asia."""
-    mmsis = set()
-    async with websockets.connect("wss://stream.aisstream.io/v0/stream") as websocket:
-        subscribe_message = {"APIKey": os.environ["AISSTREAM_API_KEY"],
-                             "BoundingBoxes": REGION_BOUNDING_BOXES,
-                             "FilterMessageTypes": ["PositionReport"]}
-        await websocket.send(json.dumps(subscribe_message))
-        print(f"Sampling {SAMPLE_COUNT} MMSIs from Japan / Southeast Asia...")
-        async for message_json in websocket:
-            message = json.loads(message_json)
-            if message["MessageType"] == "PositionReport":
-                mmsis.add(str(message["MetaData"]["MMSI"]))
-            if len(mmsis) >= SAMPLE_COUNT:
-                break
-    print(f"Sampled MMSIs: {list(mmsis)}")
-    return list(mmsis)
 
-RECEIVE_TIMEOUT = 60  # seconds before assuming a dead connection
+async def poll_marinesia(mmsi_list: list[str]):
+    api_key = os.environ["MARINESIA_API_KEY"]
 
-async def connect_ais_stream(sample=False, mmsi: str | None = None):
-    # Known tracked ships + Japan / Southeast Asia region vessels
-    hardcoded = ["257711000", "230028670", "352003002", "566524000", "431402072", "305127000", "431009418", "431005074",
-                 "431602000", "477307800", "563036700", "525019017", "525100518"]
+    async with httpx.AsyncClient(timeout=15) as http:
+        while True:
+            received_counts: dict[str, int] = {}
+            for mmsi in mmsi_list:
+                timestamp = datetime.now(timezone.utc)
+                try:
+                    resp = await http.get(
+                        BASE_URL,
+                        params={"mmsi": mmsi, "key": api_key},
+                    )
+                    resp.raise_for_status()
+                    body = resp.json()
+                except httpx.HTTPStatusError as e:
+                    print(f"[{timestamp}] HTTP error {e.response.status_code} for MMSI {mmsi}: {e.response.text}")
+                    await asyncio.sleep(REQUEST_DELAY)
+                    continue
+                except Exception as e:
+                    print(f"[{timestamp}] Request error for MMSI {mmsi}: {e}")
+                    await asyncio.sleep(REQUEST_DELAY)
+                    continue
 
-    if mmsi:
-        mmsi_filter = [mmsi]
-    elif sample:
-        mmsi_filter = await collect_sample_mmsis()
-    else:
-        sampled = await collect_sample_mmsis()
-        # Merge hardcoded + sampled, deduplicated
-        mmsi_filter = list(dict.fromkeys(hardcoded + sampled))
+                if body.get("error"):
+                    print(f"[{timestamp}] API error for MMSI {mmsi}: {body.get('message')}")
+                    await asyncio.sleep(REQUEST_DELAY)
+                    continue
 
-    print(f"Tracking MMSIs: {mmsi_filter}")
+                vessel = body.get("data")
+                if not vessel:
+                    print(f"[{timestamp}] No data for MMSI {mmsi}")
+                    await asyncio.sleep(REQUEST_DELAY)
+                    continue
 
-    while True:
-        received_counts: dict[str, int] = {}
-        try:
-            async with websockets.connect("wss://stream.aisstream.io/v0/stream") as websocket:
-                subscribe_message = {"APIKey": os.environ["AISSTREAM_API_KEY"],
-                                     "BoundingBoxes": REGION_BOUNDING_BOXES, #required
-                                     "FiltersShipMMSI": mmsi_filter, #optional
-                                     "FilterMessageTypes": ["PositionReport", "ShipStaticData"]} #optional
+                mmsi_str = str(vessel.get("mmsi", mmsi))
+                received_counts[mmsi_str] = received_counts.get(mmsi_str, 0) + 1
 
-                await websocket.send(json.dumps(subscribe_message))
-                print(f"[{datetime.now(timezone.utc)}] Connected.")
+                doc = {
+                    # Normalized to aisstream PascalCase field names
+                    "Cog":                      vessel.get("cog"),
+                    "CommunicationState":        vessel.get("com_state"),
+                    "Latitude":                  vessel.get("lat"),
+                    "Longitude":                 vessel.get("lng"),
+                    "NavigationalStatus":        vessel.get("status"),
+                    "PositionAccuracy":          vessel.get("pos_acc"),
+                    "Raim":                      vessel.get("raim"),
+                    "RateOfTurn":                vessel.get("rot"),
+                    "RepeatIndicator":           vessel.get("repeat"),
+                    "Sog":                       vessel.get("sog"),
+                    "Spare":                     vessel.get("spare"),
+                    "SpecialManoeuvreIndicator": vessel.get("smi"),
+                    "TrueHeading":               vessel.get("hdt"),
+                    "UserID":                    vessel.get("mmsi"),
+                    "Valid":                     vessel.get("valid"),
+                    # Marinesia-only extras
+                    "imo":     vessel.get("imo"),
+                    "dest":    vessel.get("dest"),
+                    "eta":     vessel.get("eta"),
+                    "draught": vessel.get("draught"),
+                    "ts":      vessel.get("ts"),
+                    # Shared envelope fields
+                    "MessageType": "PositionReport",
+                    "MetaData": {
+                        "MMSI":        vessel.get("mmsi"),
+                        "MMSI_String": mmsi_str,
+                        "ShipName":    "",
+                        "latitude":    vessel.get("lat"),
+                        "longitude":   vessel.get("lng"),
+                        "time_utc":    vessel.get("ts"),
+                    },
+                    "ship_id":   vessel.get("mmsi"),
+                    "timestamp": timestamp,
+                }
+                print(f"[{timestamp}] [PositionReport] MMSI: {mmsi_str} "
+                      f"lat={vessel.get('lat')} lng={vessel.get('lng')} "
+                      f"sog={vessel.get('sog')} cog={vessel.get('cog')}")
+                try:
+                    await collection.insert_one(doc)
+                except Exception as db_err:
+                    print(f"[{timestamp}] DB insert error for MMSI {mmsi_str}: {db_err}")
 
-                while True:
-                    try:
-                        message_json = await asyncio.wait_for(websocket.recv(), timeout=RECEIVE_TIMEOUT)
-                    except asyncio.TimeoutError:
-                        print(f"[{datetime.now(timezone.utc)}] No message in {RECEIVE_TIMEOUT}s — reconnecting...")
-                        print(f"[{datetime.now(timezone.utc)}] Messages received this session: {received_counts}")
-                        break
+                await asyncio.sleep(REQUEST_DELAY)
 
-                    message = json.loads(message_json)
-                    message_type = message["MessageType"]
-                    metadata = message["MetaData"]
-                    timestamp = datetime.now(timezone.utc)
-
-                    if message_type in ("PositionReport", "ShipStaticData"):
-                        mmsi_str = str(metadata['MMSI'])
-                        received_counts[mmsi_str] = received_counts.get(mmsi_str, 0) + 1
-                        ais_message = message['Message'][message_type]
-                        print(f"[{timestamp}] [{message_type}] {metadata['ShipName']} (MMSI: {metadata['MMSI']})")
-                        ais_message['MessageType'] = message_type
-                        ais_message['MetaData'] = metadata
-                        ais_message['ship_id'] = metadata['MMSI']
-                        ais_message['timestamp'] = timestamp
-                        try:
-                            await collection.insert_one(ais_message)
-                        except Exception as db_err:
-                            print(f"[{datetime.now(timezone.utc)}] DB insert error for MMSI {metadata['MMSI']}: {db_err}")
-
-        except (websockets.ConnectionClosed, OSError) as e:
-            print(f"[{datetime.now(timezone.utc)}] Connection error: {e} — reconnecting...")
-            print(f"[{datetime.now(timezone.utc)}] Messages received this session: {received_counts}")
+            print(f"[{datetime.now(timezone.utc)}] Poll complete. Counts this cycle: {received_counts}. "
+                  f"Sleeping {POLL_INTERVAL}s...")
+            await asyncio.sleep(POLL_INTERVAL)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--sample", action="store_true",
-                        help=f"Filter to {SAMPLE_COUNT} random MMSIs collected from an initial ping")
-    parser.add_argument("--mmsi", type=str, default=None,
-                        help="Track a single MMSI only (skips sampling and hardcoded list)")
-    args = parser.parse_args()
-    asyncio.run(connect_ais_stream(sample=args.sample, mmsi=args.mmsi))
+    asyncio.run(poll_marinesia(MMSI_LIST))
+    # asyncio.run(connect_ais_stream(sample=args.sample, mmsi=args.mmsi))
