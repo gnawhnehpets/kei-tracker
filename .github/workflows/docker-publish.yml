@@ -36,12 +36,11 @@ jobs:
       - name: Build and push aisstream-backup
         uses: docker/build-push-action@v6
         with:
-          context: ./data-sync
-          dockerfile: ./data-sync/Dockerfile.aisstream
+          context: ./data-sync-aisstream
           push: true
           tags: |
-            gnawhnehpets/keitracker-2:latest
-            gnawhnehpets/keitracker-2:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/keitracker-2:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/keitracker-2:${{ github.sha }}
           cache-from: type=gha,scope=aisstream-backup
           cache-to: type=gha,scope=aisstream-backup,mode=max
 
