@@ -16,8 +16,8 @@ services:
 
   data-sync-aisstream:
     build:
-      context: ./data-sync
-      dockerfile: Dockerfile.aisstream
+      context: ./data-sync-aisstream
+      dockerfile: Dockerfile
     # image: ${DOCKERHUB_USERNAME}/keitracker-2:latest
     restart: unless-stopped
     command: python -u main_aisstream.py
