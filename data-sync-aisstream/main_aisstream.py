@@ -13,7 +13,7 @@ client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGODB_URI"])
 db = client[os.environ["DATABASE_NAME"]]
 collection = db[os.environ["DATABASE_COLLECTION"]]
 
-SAMPLE_COUNT = 100
+SAMPLE_COUNT = 25
 
 # Japan + surrounding waters — used for sampling only
 JAPAN_BOUNDING_BOXES = [
