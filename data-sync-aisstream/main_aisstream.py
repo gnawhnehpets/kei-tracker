@@ -15,10 +15,14 @@ collection = db[os.environ["DATABASE_COLLECTION"]]
 
 SAMPLE_COUNT = 100
 
-# Global bounding box to avoid constraining data pulls
-REGION_BOUNDING_BOXES = [
-    [[24.0, 122.0], [46.0, 146.0]]  # Covers Japan + surrounding waters
-    # [[-90, -180], [90, 180]]  # Global coverage
+# Japan + surrounding waters — used for sampling only
+JAPAN_BOUNDING_BOXES = [
+    [[24.0, 122.0], [46.0, 153.0]]
+]
+
+# Global — used when tracking specific MMSIs that may be anywhere in the world
+GLOBAL_BOUNDING_BOXES = [
+    [[-90, -180], [90, 180]]
 ]
 
 async def collect_sample_mmsis():
@@ -26,7 +30,7 @@ async def collect_sample_mmsis():
     mmsis = set()
     async with websockets.connect("wss://stream.aisstream.io/v0/stream") as websocket:
         subscribe_message = {"APIKey": os.environ["AISSTREAM_API_KEY"],
-                             "BoundingBoxes": REGION_BOUNDING_BOXES,
+                             "BoundingBoxes": JAPAN_BOUNDING_BOXES,
                              "FilterMessageTypes": ["PositionReport"]}
         await websocket.send(json.dumps(subscribe_message))
         print(f"Sampling {SAMPLE_COUNT} MMSIs from Japan + surrounding waterss...")
@@ -62,7 +66,7 @@ async def connect_ais_stream(sample=False, mmsi: str | None = None):
         try:
             async with websockets.connect("wss://stream.aisstream.io/v0/stream") as websocket:
                 subscribe_message = {"APIKey": os.environ["AISSTREAM_API_KEY"],
-                                     "BoundingBoxes": REGION_BOUNDING_BOXES, #required
+                                     "BoundingBoxes": GLOBAL_BOUNDING_BOXES, #required
                                      "FiltersShipMMSI": mmsi_filter, #optional
                                      "FilterMessageTypes": ["PositionReport", "ShipStaticData"]} #optional
 
