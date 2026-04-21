@@ -13,23 +13,23 @@ client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGODB_URI"])
 db = client[os.environ["DATABASE_NAME"]]
 collection = db[os.environ["DATABASE_COLLECTION"]]
 
-SAMPLE_COUNT = 10
+SAMPLE_COUNT = 100
 
 # Global bounding box to avoid constraining data pulls
 REGION_BOUNDING_BOXES = [
-    [[24.0, 122.0], [46.0, 146.0]],  # Covers Japan + surrounding waters
-    [[-90, -180], [90, 180]]  # Global coverage
+    [[24.0, 122.0], [46.0, 146.0]]  # Covers Japan + surrounding waters
+    # [[-90, -180], [90, 180]]  # Global coverage
 ]
 
 async def collect_sample_mmsis():
-    """Collect SAMPLE_COUNT unique MMSIs from Japan / Southeast Asia."""
+    """Collect SAMPLE_COUNT unique MMSIs from Japan + surrounding waters."""
     mmsis = set()
     async with websockets.connect("wss://stream.aisstream.io/v0/stream") as websocket:
         subscribe_message = {"APIKey": os.environ["AISSTREAM_API_KEY"],
                              "BoundingBoxes": REGION_BOUNDING_BOXES,
                              "FilterMessageTypes": ["PositionReport"]}
         await websocket.send(json.dumps(subscribe_message))
-        print(f"Sampling {SAMPLE_COUNT} MMSIs from Japan / Southeast Asia...")
+        print(f"Sampling {SAMPLE_COUNT} MMSIs from Japan + surrounding waterss...")
         async for message_json in websocket:
             message = json.loads(message_json)
             if message["MessageType"] == "PositionReport":
