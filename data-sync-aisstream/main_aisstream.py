@@ -17,6 +17,7 @@ SAMPLE_COUNT = 10
 
 # Global bounding box to avoid constraining data pulls
 REGION_BOUNDING_BOXES = [
+    [[24.0, 122.0], [46.0, 146.0]],  # Covers Japan + surrounding waters
     [[-90, -180], [90, 180]]  # Global coverage
 ]
 
