@@ -95,6 +95,29 @@ async def list_ships():
     for doc in docs:
         if isinstance(doc.get("last_seen"), datetime):
             doc["last_seen"] = doc["last_seen"].isoformat()
+
+    # Fill in ship names from ShipStaticData for vessels that had no name in PositionReport metadata
+    empty_name_mmsis = [doc["mmsi"] for doc in docs if not (doc.get("ship_name") or "").strip()]
+    if empty_name_mmsis:
+        name_cursor = collection.find(
+            {
+                "MetaData.MMSI": {"$in": empty_name_mmsis},
+                "MessageType": "ShipStaticData",
+            },
+            sort=[("timestamp", -1)],
+        )
+        name_map: dict[int, str] = {}
+        async for name_doc in name_cursor:
+            mmsi_key = name_doc["MetaData"]["MMSI"]
+            if mmsi_key in name_map:
+                continue
+            name = (name_doc.get("MetaData", {}).get("ShipName") or "").strip() or (name_doc.get("Name") or "").strip()
+            if name:
+                name_map[mmsi_key] = name
+        for doc in docs:
+            if not (doc.get("ship_name") or "").strip() and doc["mmsi"] in name_map:
+                doc["ship_name"] = name_map[doc["mmsi"]]
+
     return {"count": len(docs), "ships": docs}
 
 
