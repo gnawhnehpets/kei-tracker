@@ -29,7 +29,7 @@ export default function ShipHistory() {
     [rangeHours],
   )
 
-  const { data: records = [], isLoading } = useShipHistory(Number(mmsi), since)
+  const { data: records = [], isLoading, isFetching } = useShipHistory(Number(mmsi), since)
 
   const shipName = records[0]?.MetaData?.ShipName?.trim() || `MMSI ${mmsi}`
 
@@ -68,34 +68,38 @@ export default function ShipHistory() {
       ],
     }
 
-    if (sourceAdded.current) {
-      const src = map.getSource('track') as maplibregl.GeoJSONSource | undefined
-      src?.setData(geojson)
-    } else {
-      map.addSource('track', { type: 'geojson', data: geojson })
-      map.addLayer({
-        id: 'track-line',
-        type: 'line',
-        source: 'track',
-        filter: ['==', '$type', 'LineString'],
-        paint: {
-          'line-color': '#3b82f6',
-          'line-width': 2,
-          'line-opacity': 0.8,
-        },
-      })
-      map.addLayer({
-        id: 'track-points',
-        type: 'circle',
-        source: 'track',
-        filter: ['==', '$type', 'Point'],
-        paint: {
-          'circle-radius': 3,
-          'circle-color': '#60a5fa',
-          'circle-opacity': 0.7,
-        },
-      })
-      sourceAdded.current = true
+    try {
+      if (sourceAdded.current) {
+        const src = map.getSource('track') as maplibregl.GeoJSONSource | undefined
+        src?.setData(geojson)
+      } else {
+        map.addSource('track', { type: 'geojson', data: geojson })
+        map.addLayer({
+          id: 'track-line',
+          type: 'line',
+          source: 'track',
+          filter: ['==', '$type', 'LineString'],
+          paint: {
+            'line-color': '#3b82f6',
+            'line-width': 2,
+            'line-opacity': 0.8,
+          },
+        })
+        map.addLayer({
+          id: 'track-points',
+          type: 'circle',
+          source: 'track',
+          filter: ['==', '$type', 'Point'],
+          paint: {
+            'circle-radius': 3,
+            'circle-color': '#60a5fa',
+            'circle-opacity': 0.7,
+          },
+        })
+        sourceAdded.current = true
+      }
+    } catch {
+      return
     }
 
     // Fit map to track instantly (no animation — map initializes at correct center already)
@@ -176,15 +180,13 @@ export default function ShipHistory() {
         </div>
       </div>
 
-      {/* Map — only render once data is available so initial center is correct */}
-      <div className="flex-1 min-h-0">
-        {isLoading && (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-400 text-sm">Loading track…</p>
+      {/* Keep map mounted across filter changes to avoid stale map/source references */}
+      <div className="relative flex-1 min-h-0">
+        <Map onMapReady={handleMapReady} center={initialCenter} zoom={7} className="h-full" />
+        {(isLoading || isFetching) && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-950/55 pointer-events-none">
+            <p className="text-gray-300 text-sm">Loading track…</p>
           </div>
-        )}
-        {!isLoading && (
-          <Map onMapReady={handleMapReady} center={initialCenter} zoom={7} className="h-full" />
         )}
       </div>
 
