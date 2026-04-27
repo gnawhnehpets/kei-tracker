@@ -2,6 +2,8 @@
 
 A real-time AIS (Automatic Identification System) ship tracking platform. Kei-tracker ingests live vessel position broadcasts from the open ocean, stores them in MongoDB, and serves them through a FastAPI backend to a MapLibre-powered React frontend — all containerised and self-hosted on Unraid with automatic image updates via Watchtower.
 
+The app is live at [https://keitracker.steveyhwang.com](https://keitracker.steveyhwang.com)!
+
 ---
 
 ## What it does
