@@ -1,6 +1,6 @@
 # kei-tracker
 
-A real-time AIS (Automatic Identification System) ship tracking platform. Kei-tracker ingests live vessel position broadcasts from the open ocean, stores them in MongoDB, and serves them through a FastAPI backend to a MapLibre-powered React frontend — all containerised and self-hosted on Unraid with automatic image updates via Watchtower.
+A real-time AIS (Automatic Identification System) ship tracking platform. Kei-tracker ingests live vessel position broadcasts from the open ocean, stores them in MongoDB, and serves them through a FastAPI backend to a MapLibre-powered React frontend - all containerised and self-hosted on Unraid with automatic image updates via Watchtower.
 
 The app is live at [https://keitracker.steveyhwang.com](https://keitracker.steveyhwang.com)!
 
@@ -123,7 +123,7 @@ Time-series of records for a vessel, newest first.
 |---|---|---|
 | `limit` | `100` | 1–1000 records |
 | `message_type` | _(all)_ | `PositionReport` or `ShipStaticData` |
-| `since` | _(all time)_ | ISO 8601 timestamp — return records after this time |
+| `since` | _(all time)_ | ISO 8601 timestamp - return records after this time |
 
 ### `GET /health`
 Returns `{"status": "ok"}`.
@@ -135,14 +135,14 @@ Returns `{"status": "ok"}`.
 Built with **React 18 + TypeScript + Vite**, styled with **Tailwind CSS**, and bundled into a static site served by nginx.
 
 **Pages**
-- `/` — Live map: MapLibre GL map with rotated directional ship markers, a sidebar listing all tracked vessels, and a detail panel showing SOG, COG, and navigational status. Auto-selects MMSI 257711000 on load and flies to its last known position.
-- `/ships/:mmsi` — History view: track polyline drawn on a map, plus a dual-axis **Recharts** line chart of Speed over Ground (knots) and Course over Ground (degrees) over the selected time window (1 h / 6 h / 24 h / All).
+- `/` - Live map: MapLibre GL map with rotated directional ship markers, a sidebar listing all tracked vessels, and a detail panel showing SOG, COG, and navigational status. Auto-selects MMSI 257711000 on load and flies to its last known position.
+- `/ships/:mmsi` - History view: track polyline drawn on a map, plus a dual-axis **Recharts** line chart of Speed over Ground (knots) and Course over Ground (degrees) over the selected time window (1 h / 6 h / 24 h / All).
 
 **Key libraries**
-- [`maplibre-gl`](https://maplibre.org/) — open-source WebGL map renderer
-- [`@tanstack/react-query`](https://tanstack.com/query) — data fetching with 30-second auto-refresh on the live map
-- [`recharts`](https://recharts.org/) — SOG/COG time-series chart
-- [`react-router-dom`](https://reactrouter.com/) — client-side routing
+- [`maplibre-gl`](https://maplibre.org/) - open-source WebGL map renderer
+- [`@tanstack/react-query`](https://tanstack.com/query) - data fetching with 30-second auto-refresh on the live map
+- [`recharts`](https://recharts.org/) - SOG/COG time-series chart
+- [`react-router-dom`](https://reactrouter.com/) - client-side routing
 
 ---
 
@@ -152,10 +152,10 @@ GitHub Actions workflow (`.github/workflows/docker-publish.yml`) triggers on eve
 
 1. Checks out the repo and logs in to Docker Hub.
 2. Builds and pushes four images in parallel using `docker/build-push-action` with GitHub Actions cache (`type=gha`):
-   - `keitracker:latest` — from `./data-sync`
-   - `keitracker-2:latest` — from `./data-sync-aisstream`
-   - `keitracker-api:latest` — from `./api`
-   - `keitracker-frontend:latest` — from `./frontend`
+   - `keitracker:latest` - from `./data-sync`
+   - `keitracker-2:latest` - from `./data-sync-aisstream`
+   - `keitracker-api:latest` - from `./api`
+   - `keitracker-frontend:latest` - from `./frontend`
 3. Each image is also tagged with the commit SHA for rollback.
 
 On the Unraid host, **Watchtower** checks for updated images at 04:00 daily and restarts containers with label `com.centurylinklabs.watchtower.enable=true`.
