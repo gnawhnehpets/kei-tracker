@@ -47,6 +47,8 @@ export async function fetchShipHistory(
   })
   if (since) params.set('since', since)
   const res = await fetch(`${BASE}/ships/${mmsi}/history?${params}`)
+  // Some time windows legitimately have no records; treat 404 as empty history.
+  if (res.status === 404) return []
   if (!res.ok) throw new Error('Failed to fetch ship history')
   const data = await res.json()
   return data.records

@@ -45,7 +45,21 @@ export default function ShipHistory() {
   // Draw track on map whenever records or map readiness changes
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !mapReady || records.length === 0) return
+    if (!map || !mapReady) return
+
+    if (records.length === 0) {
+      try {
+        if (map.getLayer('track-line')) map.removeLayer('track-line')
+        if (map.getLayer('track-points')) map.removeLayer('track-points')
+        if (map.getSource('track')) map.removeSource('track')
+      } catch {
+        // Map may be transitioning; ignore and retry on next render.
+      }
+      shipMarkerRef.current?.remove()
+      shipMarkerRef.current = null
+      sourceAdded.current = false
+      return
+    }
 
     const sortedRecords = [...records].sort(
       (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
