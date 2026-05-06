@@ -12,7 +12,7 @@ db = client[os.environ["DATABASE_NAME"]]
 collection = db[os.environ["DATABASE_COLLECTION"]]
 
 BASE_URL = "https://api.marinesia.com/api/v2/vessel/location/latest"
-POLL_INTERVAL = 1800  # seconds between full poll cycles
+POLL_INTERVAL = 3600  # seconds between full poll cycles
 REQUEST_DELAY = 2     # seconds between individual MMSI requests
 
 MMSI_LIST = ["257711000"]
