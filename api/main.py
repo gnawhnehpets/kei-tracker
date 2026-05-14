@@ -26,7 +26,7 @@ def serialize_doc(doc: dict) -> dict:
 @app.get("/ships/{mmsi}/history")
 async def get_ship_history(
     mmsi: int,
-    limit: int = Query(default=100, ge=1, le=1000),
+    limit: int = Query(default=1000, ge=1, le=1000),
     message_type: Optional[str] = Query(default=None, description="PositionReport or ShipStaticData"),
     since: Optional[str] = Query(default=None, description="ISO 8601 timestamp — return records after this time"),
 ):
