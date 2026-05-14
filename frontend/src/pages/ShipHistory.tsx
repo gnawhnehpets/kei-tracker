@@ -64,7 +64,16 @@ export default function ShipHistory() {
     const sortedRecords = [...records].sort(
       (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     )
-    const coords: [number, number][] = sortedRecords.map((r) => [r.Longitude, r.Latitude])
+    // Unwrap longitudes so tracks crossing the antimeridian (±180°) stay continuous
+    // instead of drawing a line the long way around the globe.
+    const coords: [number, number][] = sortedRecords.map((r, i, arr) => {
+      if (i === 0) return [r.Longitude, r.Latitude]
+      const prevLng = coords[i - 1][0]
+      let lng = r.Longitude
+      while (lng - prevLng > 180) lng -= 360
+      while (lng - prevLng < -180) lng += 360
+      return [lng, r.Latitude]
+    })
 
     const geojson: GeoJSON.FeatureCollection = {
       type: 'FeatureCollection',
