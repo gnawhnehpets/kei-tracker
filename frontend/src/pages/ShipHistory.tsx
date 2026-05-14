@@ -66,7 +66,7 @@ export default function ShipHistory() {
     )
     // Unwrap longitudes so tracks crossing the antimeridian (±180°) stay continuous
     // instead of drawing a line the long way around the globe.
-    const coords: [number, number][] = sortedRecords.map((r, i, arr) => {
+    const coords: [number, number][] = sortedRecords.map((r, i) => {
       if (i === 0) return [r.Longitude, r.Latitude]
       const prevLng = coords[i - 1][0]
       let lng = r.Longitude
