@@ -39,10 +39,8 @@ export async function fetchShips(): Promise<Ship[]> {
 export async function fetchShipHistory(
   mmsi: number,
   since?: string,
-  limit = 500,
 ): Promise<PositionRecord[]> {
   const params = new URLSearchParams({
-    limit: String(limit),
     message_type: 'PositionReport',
   })
   if (since) params.set('since', since)
