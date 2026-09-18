@@ -15,7 +15,7 @@ const RANGES = [
 export default function ShipHistory() {
   const { mmsi } = useParams<{ mmsi: string }>()
   const navigate = useNavigate()
-  const [rangeHours, setRangeHours] = useState(6)
+  const [rangeHours, setRangeHours] = useState(0)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const sourceAdded = useRef(false)
   const shipMarkerRef = useRef<maplibregl.Marker | null>(null)
