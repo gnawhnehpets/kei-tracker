@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from typing import Optional
+import certifi
 from fastapi import FastAPI, HTTPException, Query
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
@@ -11,7 +12,7 @@ load_dotenv()
 
 app = FastAPI(title="Kei Tracker API")
 
-client = AsyncIOMotorClient(os.environ["MONGODB_URI"])
+client = AsyncIOMotorClient(os.environ["MONGODB_URI"], tlsCAFile=certifi.where())
 db = client[os.environ["DATABASE_NAME"]]
 collection = db[os.environ["DATABASE_COLLECTION"]]
 
